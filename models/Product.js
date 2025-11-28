@@ -20,6 +20,10 @@ const ProductSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    sellerEmail: {
+        type: String,
+        // required: true // Make it optional for now to avoid breaking existing data if any
+    },
     location: {
         type: String,
         required: true
@@ -34,6 +38,10 @@ const ProductSchema = new mongoose.Schema({
     isUrgent: {
         type: Boolean,
         default: false
+    },
+    stock: {
+        type: Number,
+        default: 1
     },
     createdAt: {
         type: Date,
