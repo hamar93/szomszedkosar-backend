@@ -11,7 +11,7 @@ const PORT = process.env.PORT || 5000;
 
 // Middleware
 app.use(cors({
-  origin: ['https://szomszedkosar.netlify.app', '*'], // Allow specific origin and wildcard (for testing)
+  origin: ['https://szomszedkosar.netlify.app', 'http://localhost:3000', '*'], // Hozzáadtam a localhost-ot is a biztonság kedvéért fejlesztéshez
   credentials: true
 }));
 app.use(express.json());
@@ -22,7 +22,11 @@ mongoose.connect(process.env.MONGODB_URI)
   .catch(err => console.error('MongoDB connection error:', err));
 
 // Routes
-app.use('/api/auth', authRoutes);
+// --- JAVÍTÁS ITT TÖRTÉNT ---
+// A frontend a /api/users/register címre küld, ezért itt is /api/users kell legyen
+app.use('/api/users', authRoutes); 
+// ---------------------------
+
 app.use('/api/products', productRoutes);
 
 // Test Route
