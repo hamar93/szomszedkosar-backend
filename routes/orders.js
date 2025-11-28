@@ -7,7 +7,16 @@ const User = require('../models/User');
 // POST / - Create a new order
 router.post('/', async (req, res) => {
     try {
-        const { productId, buyerId, quantity = 1 } = req.body;
+        let { productId, buyerId, quantity = 1 } = req.body;
+
+        // If buyerId is not in body, try to get it from the authenticated user (if middleware is used)
+        if (!buyerId && req.user && req.user.id) {
+            buyerId = req.user.id;
+        }
+
+        if (!buyerId) {
+            return res.status(400).json({ message: 'Buyer ID is required' });
+        }
 
         const product = await Product.findById(productId);
         if (!product) {
