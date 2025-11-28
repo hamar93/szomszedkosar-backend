@@ -17,7 +17,8 @@ const UserSchema = new mongoose.Schema({
     role: {
         type: String,
         enum: ['buyer', 'producer'],
-        default: 'buyer'
+        default: 'buyer',
+        required: false
     },
     subscriptionStatus: {
         type: String,
@@ -35,19 +36,24 @@ const UserSchema = new mongoose.Schema({
         type: String
     },
     phone: {
-        type: String
+        type: String,
+        required: false
     },
     bio: {
-        type: String
+        type: String,
+        required: false
     },
     avatarUrl: {
-        type: String
+        type: String,
+        required: false
     },
     city: {
-        type: String
+        type: String,
+        required: false
     },
     location: {
-        type: String
+        type: String,
+        required: false
     },
     deliveryOptions: {
         type: [String],
