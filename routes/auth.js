@@ -7,7 +7,7 @@ const bcrypt = require('bcryptjs');
 // POST /register
 router.post('/register', async (req, res) => {
     try {
-        const { email, password, name, role } = req.body;
+        const { email, password, name, role, phone, location } = req.body;
 
         // Check if user already exists
         const existingUser = await User.findOne({ email });
@@ -22,7 +22,10 @@ router.post('/register', async (req, res) => {
             email,
             password: hashedPassword,
             name,
-            role
+            role: role || 'buyer', // Default to buyer if not provided
+            phone,
+            location,
+            city: location // Map location to city as well for backward compatibility if needed
         });
 
         await newUser.save();
@@ -55,7 +58,15 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        res.json({ message: 'Login successful', user: { id: user._id, email: user.email, role: user.role, name: user.name } });
+        res.json({
+            message: 'Login successful',
+            user: {
+                id: user._id,
+                email: user.email,
+                role: user.role || 'buyer', // Default to buyer if missing
+                name: user.name
+            }
+        });
     } catch (error) {
         console.error('Login error:', error);
         res.status(500).json({ error: error.message });

@@ -21,7 +21,7 @@ app.use(cors({
 app.use(express.json());
 
 // Routes mounting
-app.use('/api/auth', authRoutes);
+app.use('/api/users', authRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/admin', adminRoutes);

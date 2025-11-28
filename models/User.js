@@ -46,6 +46,9 @@ const UserSchema = new mongoose.Schema({
     city: {
         type: String
     },
+    location: {
+        type: String
+    },
     deliveryOptions: {
         type: [String],
         default: []
