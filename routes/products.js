@@ -2,10 +2,17 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 
-// GET / - Fetch all products (limit 20)
+// GET / - Fetch all products (limit 20) or filter by sellerEmail
 router.get('/', async (req, res) => {
     try {
-        const products = await Product.find().limit(20).sort({ createdAt: -1 });
+        const { sellerEmail } = req.query;
+        let query = {};
+
+        if (sellerEmail) {
+            query.sellerEmail = sellerEmail;
+        }
+
+        const products = await Product.find(query).limit(20).sort({ createdAt: -1 });
         res.json(products);
     } catch (error) {
         res.status(500).json({ error: error.message });

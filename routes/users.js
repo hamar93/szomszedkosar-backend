@@ -49,4 +49,38 @@ router.post('/login', async (req, res) => {
     }
 });
 
+// PUT /profile - Update user profile
+router.put('/profile', async (req, res) => {
+    try {
+        const { email, name, city, bio, phone, avatarUrl, deliveryOptions } = req.body;
+
+        if (!email) {
+            return res.status(400).json({ message: 'Email is required to identify user' });
+        }
+
+        const updatedUser = await User.findOneAndUpdate(
+            { email },
+            {
+                $set: {
+                    name,
+                    city,
+                    bio,
+                    phone,
+                    avatarUrl,
+                    deliveryOptions
+                }
+            },
+            { new: true } // Return the updated document
+        );
+
+        if (!updatedUser) {
+            return res.status(404).json({ message: 'User not found' });
+        }
+
+        res.json(updatedUser);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 module.exports = router;
