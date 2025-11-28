@@ -19,6 +19,35 @@ router.get('/', async (req, res) => {
     }
 });
 
+// PUT /:id/sale - Set sale price
+router.put('/:id/sale', async (req, res) => {
+    try {
+        const { salePrice, saleEndsAt } = req.body;
+        const product = await Product.findById(req.params.id);
+
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        // If salePrice is provided, set it as current price and store original
+        if (salePrice) {
+            if (!product.originalPrice) {
+                product.originalPrice = product.price; // Store original price if not already stored
+            }
+            product.price = salePrice;
+        }
+
+        if (saleEndsAt) {
+            product.saleEndsAt = saleEndsAt;
+        }
+
+        await product.save();
+        res.json(product);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // POST / - Create a new product
 router.post('/', async (req, res) => {
     try {

@@ -43,6 +43,12 @@ const ProductSchema = new mongoose.Schema({
         type: Number,
         default: 1
     },
+    originalPrice: {
+        type: Number
+    },
+    saleEndsAt: {
+        type: Date
+    },
     createdAt: {
         type: Date,
         default: Date.now

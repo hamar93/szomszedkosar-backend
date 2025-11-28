@@ -6,7 +6,8 @@ const cors = require('cors');
 // Route-ok importálása
 const authRoutes = require('./routes/auth');
 const productRoutes = require('./routes/products');
-// Ha a payment route-ot létrehoztuk az előző lépésben, azt is be kell hívni:
+const orderRoutes = require('./routes/orders');
+const adminRoutes = require('./routes/admin');
 const paymentRoutes = require('./routes/payments');
 
 const app = express();
@@ -18,6 +19,18 @@ app.use(cors({
   credentials: true
 }));
 app.use(express.json());
+
+// Routes mounting
+app.use('/api/auth', authRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/orders', orderRoutes);
+app.use('/api/admin', adminRoutes);
+app.use('/api/payments', paymentRoutes);
+
+// Connect to MongoDB
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.error('MongoDB connection error:', err));
 
 // Start Server
 app.listen(PORT, () => {
