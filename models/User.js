@@ -19,11 +19,11 @@ const UserSchema = new mongoose.Schema({
         enum: ['buyer', 'producer'],
         default: 'buyer'
     },
-    subscription: {
+    subscriptionStatus: {
         type: String,
         enum: ['free', 'paid'],
         default: 'free'
     }
-});
+}, { timestamps: true });
 
 module.exports = mongoose.model('User', UserSchema);

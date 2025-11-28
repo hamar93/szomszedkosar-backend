@@ -13,7 +13,10 @@ const ProductSchema = new mongoose.Schema({
         type: String,
         required: true
     },
-    seller: {
+    description: {
+        type: String
+    },
+    sellerName: {
         type: String,
         required: true
     },
@@ -22,16 +25,15 @@ const ProductSchema = new mongoose.Schema({
         required: true
     },
     image: {
-        type: String,
-        required: true
+        type: String
     },
     category: {
         type: String,
         required: true
     },
-    description: {
-        type: String,
-        required: true
+    isUrgent: {
+        type: Boolean,
+        default: false
     },
     createdAt: {
         type: Date,
