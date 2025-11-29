@@ -39,22 +39,6 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: false
     },
-    bio: {
-        type: String,
-        required: false
-    },
-    avatarUrl: {
-        type: String,
-        required: false
-    },
-    city: {
-        type: String,
-        required: false
-    },
-    location: {
-        type: String,
-        required: false
-    },
     deliveryOptions: {
         type: [String],
         default: []

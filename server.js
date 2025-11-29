@@ -1,20 +1,8 @@
-require('dotenv').config();
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
+app.use(express.json());
 
-// Import Routes
-const authRoutes = require('./routes/auth');
-const productRoutes = require('./routes/products');
-const paymentRoutes = require('./routes/payments');
-const messageRoutes = require('./routes/messages');
-const orderRoutes = require('./routes/orders');
-const userRoutes = require('./routes/users');
-
-const app = express();
-const PORT = process.env.PORT || 5000;
-
-app.use(cors({ origin: '*', credentials: true }));
+mongoose.connect(process.env.MONGODB_URI)
+  .then(() => console.log('MongoDB Connected'))
+  .catch(err => console.error(err));
 app.use(express.json());
 
 mongoose.connect(process.env.MONGODB_URI)
@@ -28,6 +16,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/orders', orderRoutes);
+app.use('/api/notifications', require('./routes/notifications'));
 
 app.get('/', (req, res) => res.json({ status: "API Running" }));
 
