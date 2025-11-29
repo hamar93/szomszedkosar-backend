@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 
-// GET / - Fetch all products (limit 20) or filter by sellerEmail
+// 1. GET / - Összes termék lekérése (VAGY szűrés eladóra)
 router.get('/', async (req, res) => {
     try {
         const { sellerEmail } = req.query;
@@ -20,10 +20,23 @@ router.get('/', async (req, res) => {
     }
 });
 
-// POST / - Create a new product
+// 2. GET /:id - EGY termék lekérése ID alapján (EZ HIÁNYZOTT!)
+router.get('/:id', async (req, res) => {
+    try {
+        const product = await Product.findById(req.params.id);
+        if (!product) {
+            return res.status(404).json({ message: 'Termék nem található' });
+        }
+        res.json(product);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 3. POST / - Új termék létrehozása
 router.post('/', async (req, res) => {
     try {
-        // Alapvető validáció, hogy ne jöjjön létre üres termék
+        // Alapvető validáció
         if (!req.body.name || !req.body.price) {
             return res.status(400).json({ message: "Hiányzó adatok (Név vagy Ár kötelező)" });
         }
@@ -36,7 +49,7 @@ router.post('/', async (req, res) => {
     }
 });
 
-// DELETE /:id - Delete a product
+// 4. DELETE /:id - Termék törlése
 router.delete('/:id', async (req, res) => {
     try {
         const product = await Product.findByIdAndDelete(req.params.id);
@@ -49,7 +62,7 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-// PUT /:id/sale - Set sale price
+// 5. PUT /:id/sale - Akciós ár beállítása
 router.put('/:id/sale', async (req, res) => {
     try {
         const { salePrice, saleEndsAt } = req.body;
@@ -59,10 +72,9 @@ router.put('/:id/sale', async (req, res) => {
             return res.status(404).json({ message: 'Product not found' });
         }
 
-        // If salePrice is provided, set it as current price and store original
         if (salePrice) {
             if (!product.originalPrice) {
-                product.originalPrice = product.price; // Store original price if not already stored
+                product.originalPrice = product.price;
             }
             product.price = salePrice;
         }

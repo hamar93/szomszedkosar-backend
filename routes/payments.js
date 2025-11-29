@@ -3,68 +3,90 @@ const router = express.Router();
 const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
 const User = require('../models/User');
 
-// POST /create-subscription-checkout
+// A Frontend címe (ahová visszaküldjük a vevőt fizetés után)
+// Ha nincs beállítva környezeti változóként, akkor a Netlify címet használja alapértelmezetten
+const CLIENT_URL = process.env.CLIENT_URL || 'https://keen-cactus-9a2617.netlify.app';
+
+// Segédfüggvény: Stripe ügyfél keresése vagy létrehozása
+async function getOrCreateCustomer(user) {
+    if (user.stripeCustomerId) {
+        return user.stripeCustomerId;
+    }
+
+    const customer = await stripe.customers.create({
+        email: user.email,
+        name: user.name,
+        metadata: { userId: user._id.toString() }
+    });
+
+    user.stripeCustomerId = customer.id;
+    await user.save();
+    return customer.id;
+}
+
+// 1. HELYPÉNZ ELŐFIZETÉS (Havi 2000 Ft)
+// POST /api/payments/create-subscription-checkout
 router.post('/create-subscription-checkout', async (req, res) => {
     try {
-        const { priceId, userId, successUrl, cancelUrl } = req.body;
+        const { userId } = req.body; // A priceId-t most beégetjük, hogy egyszerűbb legyen
 
         const user = await User.findById(userId);
-        if (!user) return res.status(404).json({ error: 'User not found' });
+        if (!user) return res.status(404).json({ error: 'Felhasználó nem található' });
 
-        let customerId = user.stripeCustomerId;
-
-        if (!customerId) {
-            const customer = await stripe.customers.create({
-                email: user.email,
-                name: user.name,
-                metadata: { userId: user._id.toString() }
-            });
-            customerId = customer.id;
-            user.stripeCustomerId = customerId;
-            await user.save();
-        }
+        const customerId = await getOrCreateCustomer(user);
 
         const session = await stripe.checkout.sessions.create({
             customer: customerId,
             mode: 'subscription',
             payment_method_types: ['card'],
-            line_items: [{ price: priceId, quantity: 1 }],
-            success_url: successUrl,
-            cancel_url: cancelUrl,
-            metadata: { userId: user._id.toString(), type: 'subscription' }
+            line_items: [
+                {
+                    price_data: {
+                        currency: 'huf',
+                        product_data: {
+                            name: 'SzomszédKosár Helypénz (Havi)',
+                            description: 'Korlátlan feltöltés és marketing eszközök',
+                        },
+                        unit_amount: 200000, // 2000 Ft (fillérben kell megadni!)
+                        recurring: {
+                            interval: 'month',
+                        },
+                    },
+                    quantity: 1,
+                },
+            ],
+            success_url: `${CLIENT_URL}/payment?status=success`,
+            cancel_url: `${CLIENT_URL}/payment?status=cancel`,
+            metadata: { 
+                userId: user._id.toString(), 
+                type: 'subscription' 
+            }
         });
 
         res.json({ url: session.url });
     } catch (error) {
+        console.error('Stripe hiba:', error);
         res.status(500).json({ error: error.message });
     }
 });
 
-// POST /create-credits-checkout
+// 2. PUSH KREDIT VÁSÁRLÁS (300 Ft / db)
+// POST /api/payments/create-credits-checkout
 router.post('/create-credits-checkout', async (req, res) => {
     try {
-        const { quantity, userId, successUrl, cancelUrl } = req.body;
+        const { quantity, userId } = req.body;
 
-        const user = await User.findById(userId);
-        if (!user) return res.status(404).json({ error: 'User not found' });
-
-        let customerId = user.stripeCustomerId;
-
-        if (!customerId) {
-            const customer = await stripe.customers.create({
-                email: user.email,
-                name: user.name,
-                metadata: { userId: user._id.toString() }
-            });
-            customerId = customer.id;
-            user.stripeCustomerId = customerId;
-            await user.save();
+        if (!quantity || !userId) {
+            return res.status(400).json({ error: 'Hiányzó adatok' });
         }
 
-        // Define price per credit or total amount. Assuming dynamic price for simplicity or a fixed price ID.
-        // For this example, let's assume 1 credit = 100 HUF (approx). 
-        // Better approach: Pass a priceId for a "Credit Pack" or calculate amount.
-        // Let's use ad-hoc price for flexibility as requested "Receives quantity".
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ error: 'Felhasználó nem található' });
+
+        const customerId = await getOrCreateCustomer(user);
+
+        // Ár: 300 Ft / db
+        const unitPrice = 30000; // 300 Ft fillérben
 
         const session = await stripe.checkout.sessions.create({
             customer: customerId,
@@ -74,19 +96,25 @@ router.post('/create-credits-checkout', async (req, res) => {
                 price_data: {
                     currency: 'huf',
                     product_data: {
-                        name: `${quantity} Push Notification Credits`,
+                        name: `${quantity} db Push Értesítés Kredit`,
+                        description: 'Azonnali értesítés a környékbeli vevőknek',
                     },
-                    unit_amount: 10000, // 100 HUF * 100 cents. Example price!
+                    unit_amount: unitPrice, 
                 },
-                quantity: quantity,
+                quantity: quantity, // Pl. 5 vagy 10 db
             }],
-            success_url: successUrl,
-            cancel_url: cancelUrl,
-            metadata: { userId: user._id.toString(), type: 'credits', quantity: quantity }
+            success_url: `${CLIENT_URL}/payment?status=success`,
+            cancel_url: `${CLIENT_URL}/payment?status=cancel`,
+            metadata: { 
+                userId: user._id.toString(), 
+                type: 'credits', 
+                quantity: quantity 
+            }
         });
 
         res.json({ url: session.url });
     } catch (error) {
+        console.error('Stripe hiba:', error);
         res.status(500).json({ error: error.message });
     }
 });
