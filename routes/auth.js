@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const User = require('../models/User'); // Feltételezzük, hogy az User modell elérhető
+const User = require('../models/User');
 const bcrypt = require('bcryptjs');
 
 // POST /register
@@ -16,34 +16,32 @@ router.post('/register', async (req, res) => {
 
         // 2. Alapvető adatok ellenőrzése
         if (!name || !email || !password) {
-             return res.status(400).json({ message: 'Hiányzó adatok: név, email vagy jelszó.' });
+            return res.status(400).json({ message: 'Hiányzó adatok: név, email vagy jelszó.' });
         }
 
         // 3. Jelszó hash-elése
         const hashedPassword = await bcrypt.hash(password, 10);
 
-        // 4. Új felhasználó létrehozása (a séma required: false miatt a hiányzó mezők (pl. phone, bio) rendben vannak)
+        // 4. Új felhasználó létrehozása
         const newUser = new User({
             email,
             password: hashedPassword,
             name,
-            role: role || 'buyer', // Alapértelmezett beállítás
+            role: role || 'buyer',
             phone,
             location,
-            city: location, // Hozzáadjuk a city mezőt is
+            city: location,
             bio,
             avatarUrl
         });
 
         await newUser.save();
-        
-        // Sikeres regisztráció
-        res.status(201).json({ 
-            message: 'User registered successfully', 
-            user: { id: newUser._id, email: newUser.email, role: newUser.role, name: newUser.name } 
+
+        res.status(201).json({
+            message: 'User registered successfully',
+            user: { id: newUser._id, email: newUser.email, role: newUser.role, name: newUser.name }
         });
     } catch (error) {
-        // Log Mongoose validációs hibák esetén (pl. ha az enum hiba)
         console.error('Registration error:', error);
         res.status(500).json({ error: error.message || 'Szerver hiba a regisztráció során.' });
     }
@@ -53,7 +51,7 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        
+
         const user = await User.findOne({ email });
 
         // KRITIKUS ELLENŐRZÉS: User nem található VAGY nincs mentett jelszava (régi adat)
@@ -66,19 +64,18 @@ router.post('/login', async (req, res) => {
         const isMatch = await bcrypt.compare(password, user.password);
 
         if (!isMatch) {
-            console.log('Password mismatch for:', email);
             return res.status(401).json({ message: 'Hibás email vagy jelszó' });
         }
 
-        // SIKERES BELÉPÉS: Visszatérünk az adatokkal
+        // SIKERES BELÉPÉS
         res.json({
             message: 'Login successful',
             user: {
                 id: user._id,
                 email: user.email,
-                role: user.role || 'buyer', // Visszafelé kompatibilitás
+                role: user.role || 'buyer',
                 name: user.name,
-                // Itt adhatod vissza a többi szükséges adatot (phone, location, stb.)
+                city: user.city || user.location
             }
         });
     } catch (error) {
