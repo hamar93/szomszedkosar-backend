@@ -3,17 +3,32 @@ const router = express.Router();
 const Product = require('../models/Product');
 
 // GET / - Fetch all products (limit 20) or filter by sellerEmail
+// GET /api/products
 router.get('/', async (req, res) => {
     try {
         const { sellerEmail } = req.query;
         let query = {};
 
+        // HA van sellerEmail paraméter, akkor CSAK az övéit adjuk vissza
         if (sellerEmail) {
-            query.sellerEmail = sellerEmail;
+            query = { sellerEmail: sellerEmail };
         }
 
-        const products = await Product.find(query).limit(20).sort({ createdAt: -1 });
+        const products = await Product.find(query).sort({ createdAt: -1 });
         res.json(products);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
+// DELETE /:id - Delete a product
+router.delete('/:id', async (req, res) => {
+    try {
+        const product = await Product.findByIdAndDelete(req.params.id);
+        if (!product) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        res.json({ message: 'Product deleted successfully' });
     } catch (error) {
         res.status(500).json({ error: error.message });
     }

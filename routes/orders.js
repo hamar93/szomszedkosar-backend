@@ -15,6 +15,8 @@ router.post('/', async (req, res) => {
         }
 
         if (!buyerId) {
+            // Fallback for now: if no buyerId, use a placeholder or error. 
+            // Ideally this should be strictly required.
             return res.status(400).json({ message: 'Buyer ID is required' });
         }
 
@@ -32,7 +34,7 @@ router.post('/', async (req, res) => {
         const order = new Order({
             buyerId,
             productId,
-            sellerId: product.sellerEmail, // Assuming we added sellerEmail to Product
+            sellerId: product.sellerEmail,
             quantity,
             totalPrice
         });
