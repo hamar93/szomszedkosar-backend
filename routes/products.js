@@ -8,19 +8,19 @@ router.get('/', async (req, res) => {
         const { sellerEmail } = req.query;
         let query = {};
 
-        // HA van sellerEmail paraméter, akkor CSAK az övéit adjuk vissza
+        // Ha van sellerEmail paraméter, akkor szűrünk rá
         if (sellerEmail) {
-            query = { sellerEmail: sellerEmail };
+            query.sellerEmail = sellerEmail;
         }
 
-        const products = await Product.find(query).sort({ createdAt: -1 });
+        const products = await Product.find(query).sort({ createdAt: -1 }).limit(50);
         res.json(products);
-    } catch (err) {
-        res.status(500).json({ message: err.message });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
-// 2. GET /:id - EGY termék lekérése ID alapján (EZ HIÁNYZOTT!)
+// 2. GET /:id - EGY termék lekérése ID alapján
 router.get('/:id', async (req, res) => {
     try {
         const product = await Product.findById(req.params.id);
