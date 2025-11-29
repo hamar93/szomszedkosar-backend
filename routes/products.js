@@ -3,7 +3,6 @@ const router = express.Router();
 const Product = require('../models/Product');
 
 // GET / - Fetch all products (limit 20) or filter by sellerEmail
-// GET /api/products
 router.get('/', async (req, res) => {
     try {
         const { sellerEmail } = req.query;
@@ -21,14 +20,17 @@ router.get('/', async (req, res) => {
     }
 });
 
-// DELETE /:id - Delete a product
-router.delete('/:id', async (req, res) => {
+// POST / - Create a new product
+router.post('/', async (req, res) => {
     try {
-        const product = await Product.findByIdAndDelete(req.params.id);
-        if (!product) {
-            return res.status(404).json({ message: 'Product not found' });
+        // Alapvető validáció, hogy ne jöjjön létre üres termék
+        if (!req.body.name || !req.body.price) {
+            return res.status(400).json({ message: "Hiányzó adatok (Név vagy Ár kötelező)" });
         }
-        res.json({ message: 'Product deleted successfully' });
+
+        const newProduct = new Product(req.body);
+        const savedProduct = await newProduct.save();
+        res.status(201).json(savedProduct);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -71,17 +73,6 @@ router.put('/:id/sale', async (req, res) => {
 
         await product.save();
         res.json(product);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// POST / - Create a new product
-router.post('/', async (req, res) => {
-    try {
-        const newProduct = new Product(req.body);
-        await newProduct.save();
-        res.status(201).json(newProduct);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
