@@ -26,6 +26,20 @@ const OrderSchema = new mongoose.Schema({
         enum: ['pending', 'completed', 'cancelled'],
         default: 'pending'
     },
+    deliveryAddress: {
+        type: String, // Full address
+        required: false
+    },
+    paymentStatus: {
+        type: String,
+        enum: ['unpaid', 'paid', 'cod'], // cod = Cash on Delivery
+        default: 'unpaid'
+    },
+    paymentType: {
+        type: String,
+        enum: ['card', 'cash'],
+        default: 'cash'
+    },
     createdAt: {
         type: Date,
         default: Date.now

@@ -7,7 +7,7 @@ const User = require('../models/User');
 // POST / - Create a new order
 router.post('/', async (req, res) => {
     try {
-        let { productId, buyerId, quantity = 1 } = req.body;
+        const { productId, buyerId, quantity = 1, deliveryAddress, paymentType = 'cash' } = req.body;
 
         // If buyerId is not in body, try to get it from the authenticated user (if middleware is used)
         if (!buyerId && req.user && req.user.id) {
@@ -36,7 +36,10 @@ router.post('/', async (req, res) => {
             productId,
             sellerId: product.sellerEmail,
             quantity,
-            totalPrice
+            totalPrice,
+            deliveryAddress,
+            paymentType,
+            paymentStatus: paymentType === 'cash' ? 'unpaid' : 'unpaid' // Default
         });
 
         await order.save();

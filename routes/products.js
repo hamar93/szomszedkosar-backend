@@ -2,22 +2,32 @@ const express = require('express');
 const router = express.Router();
 const Product = require('../models/Product');
 
-// 1. GET / - Összes termék lekérése (VAGY szűrés eladóra)
+// 1. GET / - Összes termék lekérése (VAGY szűrés eladóra, VAGY rendezés távolság/város szerint)
 router.get('/', async (req, res) => {
     try {
-        const { sellerEmail } = req.query;
+        const { sellerEmail, city } = req.query;
         let query = {};
 
         // Ha van sellerEmail paraméter, akkor szűrünk rá
         if (sellerEmail) {
             query.sellerEmail = sellerEmail;
-            console.log('🔍 DEBUG: Filtering products by sellerEmail:', sellerEmail);
-        } else {
-            console.log('🔍 DEBUG: Fetching all products (no filter)');
         }
 
-        const products = await Product.find(query).sort({ createdAt: -1 }).limit(50);
-        console.log(`✅ Found ${products.length} products`);
+        let products = await Product.find(query).sort({ createdAt: -1 }).limit(50);
+
+        // Ha van 'city' paraméter, rendezzük előre azokat, amik abban a városban vannak
+        if (city) {
+            console.log(`📍 Sorting products for city: ${city}`);
+            products = products.sort((a, b) => {
+                const aMatch = a.location && a.location.toLowerCase().includes(city.toLowerCase());
+                const bMatch = b.location && b.location.toLowerCase().includes(city.toLowerCase());
+
+                if (aMatch && !bMatch) return -1; // a comes first
+                if (!aMatch && bMatch) return 1;  // b comes first
+                return 0;
+            });
+        }
+
         res.json(products);
     } catch (error) {
         res.status(500).json({ error: error.message });
