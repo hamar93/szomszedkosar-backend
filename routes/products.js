@@ -11,9 +11,13 @@ router.get('/', async (req, res) => {
         // Ha van sellerEmail paraméter, akkor szűrünk rá
         if (sellerEmail) {
             query.sellerEmail = sellerEmail;
+            console.log('🔍 DEBUG: Filtering products by sellerEmail:', sellerEmail);
+        } else {
+            console.log('🔍 DEBUG: Fetching all products (no filter)');
         }
 
         const products = await Product.find(query).sort({ createdAt: -1 }).limit(50);
+        console.log(`✅ Found ${products.length} products`);
         res.json(products);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -36,13 +40,25 @@ router.get('/:id', async (req, res) => {
 // 3. POST / - Új termék létrehozása
 router.post('/', async (req, res) => {
     try {
+        console.log('🔍 DEBUG: Received product creation request');
+        console.log('🔍 DEBUG: req.body =', req.body);
+        console.log('🔍 DEBUG: sellerEmail =', req.body.sellerEmail);
+
         // Alapvető validáció
         if (!req.body.name || !req.body.price) {
             return res.status(400).json({ message: "Hiányzó adatok (Név vagy Ár kötelező)" });
         }
 
+        // KRITIKUS: Ellenőrizzük hogy sellerEmail el van küldve
+        if (!req.body.sellerEmail) {
+            console.warn('⚠️ WARNING: sellerEmail is missing!');
+            return res.status(400).json({ message: "Hiányzó sellerEmail - a termék nem hozható létre" });
+        }
+
         const newProduct = new Product(req.body);
         const savedProduct = await newProduct.save();
+
+        console.log('✅ SUCCESS: Product created with sellerEmail:', savedProduct.sellerEmail);
         res.status(201).json(savedProduct);
     } catch (error) {
         res.status(500).json({ error: error.message });
