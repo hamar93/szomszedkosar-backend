@@ -16,7 +16,7 @@ const UserSchema = new mongoose.Schema({
     },
     role: {
         type: String,
-        enum: ['buyer', 'producer'],
+        enum: ['buyer', 'producer', 'admin', 'chef'],
         default: 'buyer',
         required: false
     },
@@ -36,6 +36,14 @@ const UserSchema = new mongoose.Schema({
         type: String
     },
     phone: {
+        type: String,
+        required: false
+    },
+    companyName: {
+        type: String,
+        required: false
+    },
+    taxNumber: {
         type: String,
         required: false
     },
