@@ -83,4 +83,21 @@ router.put('/profile', async (req, res) => {
     }
 });
 
+// GET / - Get all users (optionally filter by role)
+router.get('/', async (req, res) => {
+    try {
+        const { role } = req.query;
+        const query = {};
+
+        if (role) {
+            query.role = role;
+        }
+
+        const users = await User.find(query).select('-password'); // Exclude password
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ message: err.message });
+    }
+});
+
 module.exports = router;

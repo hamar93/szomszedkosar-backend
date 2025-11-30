@@ -54,6 +54,10 @@ const UserSchema = new mongoose.Schema({
     pushSubscription: {
         type: Object,
         required: false
+    },
+    location: {
+        latitude: { type: Number },
+        longitude: { type: Number }
     }
 }, { timestamps: true });
 
