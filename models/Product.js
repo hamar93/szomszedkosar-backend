@@ -53,6 +53,17 @@ const ProductSchema = new mongoose.Schema({
     createdAt: {
         type: Date,
         default: Date.now
+    },
+    // B2B / Wholesale Fields
+    isWholesaleAvailable: {
+        type: Boolean,
+        default: false
+    },
+    wholesalePrice: {
+        type: Number
+    },
+    minWholesaleQuantity: {
+        type: Number
     }
 });
 
