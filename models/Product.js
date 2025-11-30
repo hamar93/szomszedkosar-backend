@@ -33,7 +33,8 @@ const ProductSchema = new mongoose.Schema({
     },
     category: {
         type: String,
-        required: true
+        required: true,
+        enum: ["Zöldség", "Gyümölcs", "Tojás & Tej", "Hús & Húskészítmények", "Pékáru", "Édesség & Méz", "Italok", "Kamra", "Házi kozmetikum", "Kézműves & Otthon", "Kert és növények", "Állati termékek", "Szezonális"]
     },
     isUrgent: {
         type: Boolean,
