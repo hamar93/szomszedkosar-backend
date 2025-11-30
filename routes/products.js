@@ -8,9 +8,12 @@ router.get('/', async (req, res) => {
         const { sellerEmail, city } = req.query;
         let query = {};
 
-        // Ha van sellerEmail paraméter, akkor szűrünk rá
+        // Ha van sellerEmail paraméter (Producer Profile), akkor szűrünk rá és MINDENT visszaadunk (készlet 0 is)
         if (sellerEmail) {
             query.sellerEmail = sellerEmail;
+        } else {
+            // Ha NINCS sellerEmail (Public Feed/Search), akkor CSAK a készleten lévőket mutatjuk
+            query.stock = { $gt: 0 };
         }
 
         let products = await Product.find(query).sort({ createdAt: -1 }).limit(50);
@@ -88,7 +91,26 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
-// 5. PUT /:id/sale - Akciós ár beállítása
+// 5. PUT /:id - Termék frissítése (pl. készlet, ár, leírás)
+router.put('/:id', async (req, res) => {
+    try {
+        const updatedProduct = await Product.findByIdAndUpdate(
+            req.params.id,
+            { $set: req.body },
+            { new: true } // Visszaadja a frissített dokumentumot
+        );
+
+        if (!updatedProduct) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+
+        res.json(updatedProduct);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// 6. PUT /:id/sale - Akciós ár beállítása (Megtartva kompatibilitás miatt, de a fenti PUT is tudja)
 router.put('/:id/sale', async (req, res) => {
     try {
         const { salePrice, saleEndsAt } = req.body;
