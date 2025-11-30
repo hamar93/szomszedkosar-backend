@@ -51,6 +51,14 @@ const UserSchema = new mongoose.Schema({
         type: [String],
         default: []
     },
+    logistics: {
+        hasLocalPickup: { type: Boolean, default: true },
+        pickupAddress: { type: String, default: '' },
+        hasHomeDelivery: { type: Boolean, default: false },
+        deliveryRadius: { type: Number, default: 0 },
+        deliveryCost: { type: Number, default: 0 },
+        hasShipping: { type: Boolean, default: false }
+    },
     pushSubscription: {
         type: Object,
         required: false
