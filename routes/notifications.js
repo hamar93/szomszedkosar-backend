@@ -1,61 +1,80 @@
 const express = require('express');
 const router = express.Router();
+const webpush = require('web-push');
 const User = require('../models/User');
-const Notification = require('../models/Notification');
 
-// POST /send - Send a push notification (deducts 1 credit)
-router.post('/send', async (req, res) => {
+// VAPID Keys - In production, these should be in environment variables
+const publicVapidKey = process.env.VAPID_PUBLIC_KEY || 'BL45wWzteYh93_KYUFF9UZOu9GSuK10Z2ubePP3Um23y9i9DCV6-1giYFPeX-k85jMWDhi16aOE4zA-4DtXu5Mk';
+const privateVapidKey = process.env.VAPID_PRIVATE_KEY || 'OXmXnMde1VzOUrnbiOlcwq3L-BS-3VwvPx8WOnD-sYk';
+
+webpush.setVapidDetails(
+    'mailto:support@szomszedkosar.hu',
+    publicVapidKey,
+    privateVapidKey
+);
+
+// Subscribe Route
+router.post('/subscribe', async (req, res) => {
     try {
-        const { userId, message, radius = 15 } = req.body;
+        const { subscription, userId } = req.body;
 
-        if (!userId || !message) {
+        if (!userId || !subscription) {
             return res.status(400).json({ message: 'Hiányzó adatok' });
         }
 
-        const user = await User.findById(userId);
-        if (!user) {
-            return res.status(404).json({ message: 'Felhasználó nem található' });
-        }
+        // Save subscription to user
+        await User.findByIdAndUpdate(userId, { pushSubscription: subscription });
 
-        // Check credits
-        if (user.pushCredits < 1) {
-            return res.status(403).json({ message: 'Nincs elég kredited! Kérlek vásárolj a profil oldalon.' });
-        }
-
-        // Create Notification
-        const notification = new Notification({
-            senderId: user.email,
-            senderName: user.name,
-            message,
-            radius
-        });
-        await notification.save();
-
-        // Deduct credit
-        user.pushCredits -= 1;
-        await user.save();
-
-        console.log(`📢 PUSH SENT: "${message}" from ${user.email} (Radius: ${radius}km)`);
-
-        res.status(201).json({
-            message: 'Sikeres küldés!',
-            remainingCredits: user.pushCredits
-        });
-
+        res.status(201).json({ message: 'Feliratkozás sikeres' });
     } catch (error) {
-        console.error('Push error:', error);
-        res.status(500).json({ message: error.message });
+        console.error('Subscription error:', error);
+        res.status(500).json({ message: 'Hiba a feliratkozás során' });
     }
 });
 
-// GET / - Get recent notifications (mock feed)
-router.get('/', async (req, res) => {
+// Send Alert Route (Trigger)
+router.post('/send-alert', async (req, res) => {
     try {
-        // Return last 20 notifications sorted by date
-        const notifications = await Notification.find().sort({ createdAt: -1 }).limit(20);
-        res.json(notifications);
+        const { message, location, radius } = req.body;
+
+        // In a real app, we would query users based on location using MongoDB geospatial queries.
+        // For now, we'll send to ALL users who have a subscription.
+        const users = await User.find({ pushSubscription: { $exists: true, $ne: null } });
+
+        const payload = JSON.stringify({
+            title: 'SzomszédKosár Értesítés',
+            body: message,
+            icon: '/icons/icon-192x192.png' // Ensure this icon exists or use a default
+        });
+
+        let successCount = 0;
+        let failureCount = 0;
+
+        const promises = users.map(user => {
+            return webpush.sendNotification(user.pushSubscription, payload)
+                .then(() => {
+                    successCount++;
+                })
+                .catch(err => {
+                    console.error(`Error sending to user ${user._id}:`, err);
+                    failureCount++;
+                    // Optional: Remove invalid subscriptions
+                    if (err.statusCode === 410 || err.statusCode === 404) {
+                        User.findByIdAndUpdate(user._id, { $unset: { pushSubscription: "" } }).exec();
+                    }
+                });
+        });
+
+        await Promise.all(promises);
+
+        res.json({
+            message: 'Értesítések elküldve',
+            stats: { success: successCount, failure: failureCount }
+        });
+
     } catch (error) {
-        res.status(500).json({ message: error.message });
+        console.error('Send alert error:', error);
+        res.status(500).json({ message: 'Hiba az értesítések küldésekor' });
     }
 });
 

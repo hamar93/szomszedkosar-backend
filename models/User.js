@@ -50,6 +50,10 @@ const UserSchema = new mongoose.Schema({
     deliveryOptions: {
         type: [String],
         default: []
+    },
+    pushSubscription: {
+        type: Object,
+        required: false
     }
 }, { timestamps: true });
 
